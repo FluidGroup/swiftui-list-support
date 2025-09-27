@@ -10,3 +10,4 @@ DerivedData/
 .netrc
 /Derived
 .swiftpm
+.claude/settings.local.json

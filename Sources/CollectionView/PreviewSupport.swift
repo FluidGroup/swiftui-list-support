@@ -2,6 +2,7 @@
 #if DEBUG
 
 import SwiftUI
+import SelectableForEach
 
 struct Item: Identifiable, Hashable {
   var id: Int
