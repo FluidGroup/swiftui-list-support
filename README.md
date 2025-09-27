@@ -1,4 +1,4 @@
-# swift-dynamic-list
+# swiftui-list-support
 Convenient component displaying elements in UICollectionView - Supports SwiftUI-based cell
 
 ## Requirements

@@ -1,4 +1,3 @@
-import IndexedCollection
 import SwiftUI
 
 public struct CollectionView<

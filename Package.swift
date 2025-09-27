@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "swift-dynamic-list",
+  name: "swiftui-list-support",
   platforms: [
     .macOS(.v15),
     .iOS(.v17)
