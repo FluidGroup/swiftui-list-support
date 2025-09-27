@@ -22,12 +22,8 @@ public struct StickyHeaderContext {
   }
 }
 
-/// Could be replaced with visualEffect 
-/// https://nilcoalescing.com/blog/StretchyHeaderInSwiftUI/
-///
 /// A view that sticks to the top of the screen in a ScrollView.
 /// When it's bouncing, it stretches the content.
-/// To use this view, you need to call ``View.enableStickyHeader()`` modifier to the ScrollView.
 public struct StickyHeader<Content: View>: View {
 
   /**
@@ -92,21 +88,26 @@ public struct StickyHeader<Content: View>: View {
           // container
           .frame(height: height, alignment: .top)
       }
-    }.onGeometryChange(for: Pair.self, of: {
-      Pair(
-        minYInGlobal: $0.frame(in: .global).minY,
-        minYInCoordinateSpace: $0.frame(in: .named(coordinateSpaceName)).minY
-      )
-    }, action: { pair in 
-      
-      self.stretchingValue = max(0, pair.minYInCoordinateSpace)
-      
-      let minY = pair.minYInGlobal
-      if minY >= 0, topMargin != minY {
-        topMargin = minY - stretchingValue
+    }
+    .onGeometryChange(
+      for: Pair.self,
+      of: {
+        Pair(
+          minYInGlobal: $0.frame(in: .global).minY,
+          minYInCoordinateSpace: $0.frame(in: .scrollView).minY
+        )
+      },
+      action: { pair in
+
+        self.stretchingValue = max(0, pair.minYInCoordinateSpace)
+
+        let minY = pair.minYInGlobal
+        if minY >= 0, topMargin != minY {
+          topMargin = minY - stretchingValue
+        }
       }
-    })
-  
+    )
+
   }
 }
 
@@ -115,37 +116,27 @@ private struct Pair: Equatable {
   let minYInCoordinateSpace: CGFloat
 }
 
-private let coordinateSpaceName = "app.muukii.stickyHeader.scrollView"
-
-extension View {
-
-  public func enableStickyHeader() -> some View {
-    coordinateSpace(name: coordinateSpaceName)
-  }
-
-}
-
 #Preview("dynamic") {
   ScrollView {
-    
+
     Section {
-      
+
       ForEach(0..<100, id: \.self) { _ in
         Text("Hello World!")
           .frame(maxWidth: .infinity)
       }
-      
+
     } header: {
-      
+
       StickyHeader(sizing: .content) { context in
-        
+
         ZStack {
-          
+
           Rectangle()
             .stroke(lineWidth: 10)
             .padding(.top, -context.topMargin)
           //
-          
+
           VStack {
             Text("StickyHeader")
             Text("StickyHeader")
@@ -160,11 +151,10 @@ extension View {
           //
           //        )
         }
-      }            
+      }
     }
-        
+
   }
-  .enableStickyHeader()
 }
 
 #Preview("dynamic full") {
@@ -198,7 +188,6 @@ extension View {
         .frame(maxWidth: .infinity)
     }
   }
-  .enableStickyHeader()
 }
 
 #Preview("fixed") {
@@ -222,7 +211,6 @@ extension View {
         .frame(maxWidth: .infinity)
     }
   }
-  .enableStickyHeader()
   .padding(.vertical, 100)
 }
 
@@ -259,12 +247,9 @@ extension View {
           //
           //        )
         }
-      }            
+      }
     }
     .padding(.top, 20)
-    
 
   }
-  .enableStickyHeader()
-
 }
