@@ -27,6 +27,9 @@
 		4BEAFA4C2A3CE48800478C59 /* AsyncMultiplexImage in Frameworks */ = {isa = PBXBuildFile; productRef = 4BEAFA4B2A3CE48800478C59 /* AsyncMultiplexImage */; };
 		4BEAFA4E2A3CE48800478C59 /* AsyncMultiplexImage-Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 4BEAFA4D2A3CE48800478C59 /* AsyncMultiplexImage-Nuke */; };
 		4BEBA5682D3EC5A200BDE020 /* BookRerender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBA5672D3EC59A00BDE020 /* BookRerender.swift */; };
+		B0699F292E8863750098A042 /* SelectableForEach in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F282E8863750098A042 /* SelectableForEach */; };
+		B0699F2B2E8863790098A042 /* StickyHeader in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F2A2E8863790098A042 /* StickyHeader */; };
+		B0699F2D2E88637D0098A042 /* RefreshControl in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F2C2E88637D0098A042 /* RefreshControl */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -49,7 +52,7 @@
 		4B26A67C2A33239500B75FB4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4B26A67E2A33239600B75FB4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4B26A6812A33239600B75FB4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		4B26A68A2A3323D400B75FB4 /* swift-dynamic-list */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "swift-dynamic-list"; path = ..; sourceTree = "<group>"; };
+		4B26A68A2A3323D400B75FB4 /* swiftui-list-support */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "swiftui-list-support"; path = ..; sourceTree = "<group>"; };
 		4B3722672A33C701005FF24A /* BookUIKitBasedCompositional.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookUIKitBasedCompositional.swift; sourceTree = "<group>"; };
 		4B910EBB2A77A2F50079D26D /* BookUIKitBasedFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookUIKitBasedFlow.swift; sourceTree = "<group>"; };
 		4B9223612D3CE6B5007E20CB /* GlobalCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalCounter.swift; sourceTree = "<group>"; };
@@ -70,8 +73,11 @@
 				4BC34FAF2CDB1B9200D22811 /* CollectionView in Frameworks */,
 				4BEAFA4E2A3CE48800478C59 /* AsyncMultiplexImage-Nuke in Frameworks */,
 				4BEAFA4C2A3CE48800478C59 /* AsyncMultiplexImage in Frameworks */,
+				B0699F2B2E8863790098A042 /* StickyHeader in Frameworks */,
+				B0699F2D2E88637D0098A042 /* RefreshControl in Frameworks */,
 				4B9981D82A34F9B500840751 /* CompositionKit in Frameworks */,
 				4BD542E92A362B40006261B9 /* DynamicList in Frameworks */,
+				B0699F292E8863750098A042 /* SelectableForEach in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,7 +87,7 @@
 		4B26A66E2A33239500B75FB4 = {
 			isa = PBXGroup;
 			children = (
-				4B26A68A2A3323D400B75FB4 /* swift-dynamic-list */,
+				4B26A68A2A3323D400B75FB4 /* swiftui-list-support */,
 				4B26A6792A33239500B75FB4 /* Development */,
 				4B26A6782A33239500B75FB4 /* Products */,
 				4B26A68B2A3323E900B75FB4 /* Frameworks */,
@@ -156,6 +162,9 @@
 				4BEAFA4D2A3CE48800478C59 /* AsyncMultiplexImage-Nuke */,
 				4BC34FAE2CDB1B9200D22811 /* CollectionView */,
 				4B08E0AC2CF5947100B05999 /* ScrollTracking */,
+				B0699F282E8863750098A042 /* SelectableForEach */,
+				B0699F2A2E8863790098A042 /* StickyHeader */,
+				B0699F2C2E88637D0098A042 /* RefreshControl */,
 			);
 			productName = Development;
 			productReference = 4B26A6772A33239500B75FB4 /* Development.app */;
@@ -363,7 +372,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -393,7 +402,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -476,6 +485,18 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4BEAFA4A2A3CE48800478C59 /* XCRemoteSwiftPackageReference "swiftui-async-multiplex-image" */;
 			productName = "AsyncMultiplexImage-Nuke";
+		};
+		B0699F282E8863750098A042 /* SelectableForEach */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SelectableForEach;
+		};
+		B0699F2A2E8863790098A042 /* StickyHeader */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StickyHeader;
+		};
+		B0699F2C2E88637D0098A042 /* RefreshControl */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RefreshControl;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
