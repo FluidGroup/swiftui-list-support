@@ -27,6 +27,7 @@
 		4BEAFA4C2A3CE48800478C59 /* AsyncMultiplexImage in Frameworks */ = {isa = PBXBuildFile; productRef = 4BEAFA4B2A3CE48800478C59 /* AsyncMultiplexImage */; };
 		4BEAFA4E2A3CE48800478C59 /* AsyncMultiplexImage-Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 4BEAFA4D2A3CE48800478C59 /* AsyncMultiplexImage-Nuke */; };
 		4BEBA5682D3EC5A200BDE020 /* BookRerender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBA5672D3EC59A00BDE020 /* BookRerender.swift */; };
+		B059CA352E8E36F900879BA6 /* Hopping.swift in Sources */ = {isa = PBXBuildFile; fileRef = B059CA342E8E36F900879BA6 /* Hopping.swift */; };
 		B0699F292E8863750098A042 /* SelectableForEach in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F282E8863750098A042 /* SelectableForEach */; };
 		B0699F2B2E8863790098A042 /* StickyHeader in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F2A2E8863790098A042 /* StickyHeader */; };
 		B0699F2D2E88637D0098A042 /* RefreshControl in Frameworks */ = {isa = PBXBuildFile; productRef = B0699F2C2E88637D0098A042 /* RefreshControl */; };
@@ -62,6 +63,7 @@
 		4BD04C182B2C15E100FE41D9 /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		4BEAFA482A3CE3B100478C59 /* BookVariadicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookVariadicView.swift; sourceTree = "<group>"; };
 		4BEBA5672D3EC59A00BDE020 /* BookRerender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookRerender.swift; sourceTree = "<group>"; };
+		B059CA342E8E36F900879BA6 /* Hopping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hopping.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 		4B26A6792A33239500B75FB4 /* Development */ = {
 			isa = PBXGroup;
 			children = (
+				B059CA342E8E36F900879BA6 /* Hopping.swift */,
 				4BEBA5672D3EC59A00BDE020 /* BookRerender.swift */,
 				4B9223612D3CE6B5007E20CB /* GlobalCounter.swift */,
 				4B08E0AA2CF5805200B05999 /* BookScrollView.swift */,
@@ -235,6 +238,7 @@
 				4B08E0AB2CF5805500B05999 /* BookScrollView.swift in Sources */,
 				4BC34FB12CDB1C0C00D22811 /* BookCollectionView.swift in Sources */,
 				4BD04C152B2C05C600FE41D9 /* BookPlainCollectionView.swift in Sources */,
+				B059CA352E8E36F900879BA6 /* Hopping.swift in Sources */,
 				4B910EBC2A77A2F50079D26D /* BookUIKitBasedFlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
