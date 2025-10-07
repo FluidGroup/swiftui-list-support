@@ -1,6 +1,7 @@
 import SwiftUI
 
 @testable import CollectionView
+@testable import SelectableForEach
 
 struct BookCollectionViewSingleSection: View, PreviewProvider {
 

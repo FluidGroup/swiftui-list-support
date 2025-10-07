@@ -4,10 +4,10 @@
 import PackageDescription
 
 let package = Package(
-  name: "swift-dynamic-list",
+  name: "swiftui-list-support",
   platforms: [
     .macOS(.v15),
-    .iOS(.v16)
+    .iOS(.v17)
   ],
   products: [
     // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -27,6 +27,14 @@ let package = Package(
       name: "StickyHeader",
       targets: ["StickyHeader"]
     ),
+    .library(
+      name: "RefreshControl",
+      targets: ["RefreshControl"]
+    ),
+    .library(
+      name: "SelectableForEach",
+      targets: ["SelectableForEach"]
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/FluidGroup/swift-indexed-collection", from: "0.2.1"),
@@ -44,7 +52,6 @@ let package = Package(
       name: "CollectionView",
       dependencies: [
         "ScrollTracking",
-        .product(name: "IndexedCollection", package: "swift-indexed-collection"),
       ]
     ),
     .target(
@@ -56,6 +63,17 @@ let package = Package(
     .target(
       name: "StickyHeader",
       dependencies: [
+      ]
+    ),
+    .target(
+      name: "RefreshControl",
+      dependencies: [
+      ]
+    ),
+    .target(
+      name: "SelectableForEach",
+      dependencies: [
+        .product(name: "IndexedCollection", package: "swift-indexed-collection"),
       ]
     ),
     .testTarget(

@@ -6,8 +6,8 @@ import IndexedCollection
  The contents that produced by ForEach have environment values that indicate the selection state.
  
  ```
- @Environment(\.collectionView_isSelected) var isSelected: Bool
- @Environment(\.collectionView_updateSelection) var updateSelection: (Bool) -> Void
+ @Environment(\.selectableForEach_isSelected) var isSelected: Bool
+ @Environment(\.selectableForEach_updateSelection) var updateSelection: (Bool) -> Void
  ```
  */
 public struct SelectableForEach<
@@ -61,7 +61,13 @@ extension EnvironmentValues {
    A boolean value that indicates whether the cell is selected.
    Provided by the ``SelectableForEach`` view.
    */
+  @available(*, deprecated, renamed: "selectableForEach_isSelected")
   @Entry public var collectionView_isSelected: Bool = false
+  
+  public var selectableForEach_isSelected: Bool {
+    get { self.collectionView_isSelected }
+    set { self.collectionView_isSelected = newValue }
+  }
 }
 
 extension EnvironmentValues {
@@ -69,7 +75,13 @@ extension EnvironmentValues {
    A closure that updates the selection state of the cell.
    Provided by the ``SelectableForEach`` view.
    */
+  @available(*, deprecated, renamed: "selectableForEach_updateSelection")
   @Entry public var collectionView_updateSelection: UpdateSelectionAction = .init { _ in }
+  
+  public var selectableForEach_updateSelection: UpdateSelectionAction {
+    get { self.collectionView_updateSelection }
+    set { self.collectionView_updateSelection = newValue }
+  }
 }
 
 public struct UpdateSelectionAction {

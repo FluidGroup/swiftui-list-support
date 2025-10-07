@@ -1,6 +1,5 @@
 import SwiftUI
-
-@testable import CollectionView
+@testable import SelectableForEach
 
 private struct _Cell: View {
   @Environment(\.collectionView_updateSelection) var update
