@@ -51,11 +51,11 @@ extension SelectionState {
     )
   }
   
-  public static func multiple<Identifier: Hashable>(
-    selected: Set<Identifier>,
+  public static func multiple<C: Collection>(
+    selected: C,
     canSelectMore: Bool,
-    onChange: @escaping (_ selected: Identifier, _ selection: SelectAction) -> Void
-  ) -> Self where Self == SelectionStateContainers.Multiple<Identifier> {
+    onChange: @escaping (_ selected: C.Element, _ selection: SelectAction) -> Void
+  ) -> Self where Self == SelectionStateContainers.Multiple<C>, C.Element: Hashable {
     .init(
       selected: selected,
       canSelectMore: canSelectMore,
@@ -125,36 +125,38 @@ public enum SelectionStateContainers {
     
   }
   
-  public struct Multiple<Identifier: Hashable>: SelectionState {
-    
-    public let selected: Set<Identifier>
-    
+  public struct Multiple<C: Collection>: SelectionState where C.Element: Hashable {
+
+    public typealias Identifier = C.Element
+
+    public let selected: C
+
     public let canSelectMore: Bool
-    
-    private let onChange: (_ selected: Identifier, _ action: SelectAction) -> Void
-    
+
+    private let onChange: (_ selected: C.Element, _ action: SelectAction) -> Void
+
     public init(
-      selected: Set<Identifier>,
+      selected: C,
       canSelectMore: Bool,
-      onChange: @escaping (_ selected: Identifier, _ action: SelectAction) -> Void
+      onChange: @escaping (_ selected: C.Element, _ action: SelectAction) -> Void
     ) {
       self.selected = selected
       self.canSelectMore = canSelectMore
-      self.onChange = onChange                  
+      self.onChange = onChange
     }
-    
-    public func isSelected(for id: Identifier) -> Bool {
-      self.selected.contains(id)
+
+    public func isSelected(for id: C.Element) -> Bool {
+      selected.contains(id)
     }
-    
-    public func isEnabled(for id: Identifier) -> Bool {
+
+    public func isEnabled(for id: C.Element) -> Bool {
       if isSelected(for: id) {
         return true
       }
       return canSelectMore
     }
-    
-    public func update(isSelected: Bool, for identifier: Identifier) {
+
+    public func update(isSelected: Bool, for identifier: C.Element) {
       if isSelected {
         onChange(identifier, .selected)
       } else {
