@@ -25,9 +25,9 @@ extension ScrollView {
   /// as the user approaches the end of the scrollable content.
   ///
   /// Use this modifier to automatically request and append more data to a
-  /// `ScrollView` when the user scrolls near the bottom. The modifier observes
+  /// `ScrollView` when the user scrolls near the end. The modifier observes
   /// the scroll position and triggers `onLoad` once the remaining distance to
-  /// the end is within `leadingScreens` times the visible height. If the content
+  /// the end is within `leadingScreens` times the visible length. If the content
   /// is initially smaller than the viewport, the loader triggers immediately.
   ///
   /// The `isLoading` binding is managed for you: it is set to `true` just before
@@ -40,8 +40,11 @@ extension ScrollView {
   ///   - isEnabled: Toggles the behavior on or off. When `false`, no loading is
   ///     triggered. Default is `true`.
   ///   - leadingScreens: The prefetch threshold expressed in multiples of the
-  ///     visible scrollable height. For example, `2` triggers when the user is
-  ///     within two screenfuls of the bottom. Default is `2`.
+  ///     visible scrollable length (height for vertical, width for horizontal).
+  ///     For example, `2` triggers when the user is within two screenfuls of the end.
+  ///     Default is `2`.
+  ///   - axis: The scroll axis to monitor. Use `.vertical` for vertical scrolling
+  ///     or `.horizontal` for horizontal scrolling. Default is `.vertical`.
   ///   - isLoading: A binding that reflects the current loading state. This
   ///     modifier sets it to `true` before calling `onLoad` and back to `false`
   ///     when `onLoad` completes.
@@ -56,11 +59,11 @@ extension ScrollView {
   ///   tracking the current load task and debouncing subsequent triggers.
   ///
   /// - Note:
-  ///   - If the content height is smaller than the viewport, `onLoad` is
+  ///   - If the content length is smaller than the viewport, `onLoad` is
   ///     triggered once on appear so you can fetch enough items to fill the
   ///     screen.
   ///   - Use non-negative values for `leadingScreens`. Values near `0` trigger
-  ///     close to the bottom; larger values prefetch earlier.
+  ///     close to the end; larger values prefetch earlier.
   ///
   /// - SeeAlso:
   ///   - ``onAdditionalLoading(isEnabled:leadingScreens:isLoading:onLoad:)`` on ``List``
@@ -75,6 +78,7 @@ extension ScrollView {
   public func onAdditionalLoading(
     isEnabled: Bool = true,
     leadingScreens: Double = 2,
+    axis: Axis = .vertical,
     isLoading: Binding<Bool>,
     onLoad: @escaping @MainActor () async -> Void
   ) -> some View {
@@ -85,6 +89,7 @@ extension ScrollView {
           isEnabled: isEnabled,
           leadingScreens: leadingScreens,
           isLoading: isLoading,
+          axis: axis,
           onLoad: onLoad
         )
       )
@@ -100,8 +105,8 @@ extension ScrollView {
   /// support asynchronous loading, use the variant that takes a `Binding<Bool>` and an `async` closure.
   ///
   /// Behavior
-  /// - When the remaining distance to the bottom of the content becomes less than or equal to
-  ///   `leadingScreens * viewportHeight`, `onLoad` is called.
+  /// - When the remaining distance to the end of the content becomes less than or equal to
+  ///   `leadingScreens * viewportLength`, `onLoad` is called.
   /// - If the content is smaller than the viewport, `onLoad` is also called (to allow initial prefetch).
   /// - Triggers are suppressed while `isEnabled` is `false`, while `isLoading` is `true`, and while a
   ///   previous load triggered by this modifier is still in progress. A brief delay is applied after
@@ -118,10 +123,12 @@ extension ScrollView {
   ///
   /// Parameters
   /// - isEnabled: Toggles additional-loading behavior on or off. Defaults to `true`.
-  /// - leadingScreens: The prefetch threshold expressed in multiples of the current viewport height.
-  ///   For example, a value of `2` triggers when the user is within two screen-heights of the bottom.
-  ///   Use `0` to trigger only when reaching the very end. Prefer non-negative values.
-  ///   Defaults to `2`.
+  /// - leadingScreens: The prefetch threshold expressed in multiples of the current viewport length
+  ///   (height for vertical, width for horizontal). For example, a value of `2` triggers when the user
+  ///   is within two screen-lengths of the end. Use `0` to trigger only when reaching the very end.
+  ///   Prefer non-negative values. Defaults to `2`.
+  /// - axis: The scroll axis to monitor. Use `.vertical` for vertical scrolling or `.horizontal` for
+  ///   horizontal scrolling. Default is `.vertical`.
   /// - isLoading: Your current loading state. While this is `true`, no new loads will be triggered.
   ///   Note: This overload does not mutate your loading state; you must update it yourself in
   ///   response to `onLoad`. If you want automatic state management, use the overload that takes
@@ -134,7 +141,7 @@ extension ScrollView {
   /// - A view that triggers `onLoad` when the user scrolls near the end of the content.
   ///
   /// See also
-  /// - `onAdditionalLoading(isEnabled:leadingScreens:isLoading:onLoad:)` where `isLoading` is a
+  /// - `onAdditionalLoading(isEnabled:leadingScreens:axis:isLoading:onLoad:)` where `isLoading` is a
   ///   `Binding<Bool>` and `onLoad` is `async`, which automatically toggles the loading state for you.
   ///
   /// Example
@@ -154,6 +161,7 @@ extension ScrollView {
   ///     .onAdditionalLoading(
   ///       isEnabled: true,
   ///       leadingScreens: 1,
+  ///       axis: .vertical,
   ///       isLoading: isLoading  // pass the current value
   ///     ) {
   ///       // This closure runs on the main actor and is synchronous.
@@ -173,6 +181,7 @@ extension ScrollView {
   public func onAdditionalLoading(
     isEnabled: Bool = true,
     leadingScreens: Double = 2,
+    axis: Axis = .vertical,
     isLoading: Bool,
     onLoad: @escaping @MainActor () -> Void
   ) -> some View {
@@ -183,6 +192,7 @@ extension ScrollView {
           isEnabled: isEnabled,
           leadingScreens: leadingScreens,
           isLoading: isLoading,
+          axis: axis,
           onLoad: onLoad
         )
       )
@@ -197,6 +207,7 @@ extension List {
   public func onAdditionalLoading(
     isEnabled: Bool = true,
     leadingScreens: Double = 2,
+    axis: Axis = .vertical,
     isLoading: Binding<Bool>,
     onLoad: @escaping @MainActor () async -> Void
   ) -> some View {
@@ -207,6 +218,7 @@ extension List {
           isEnabled: isEnabled,
           leadingScreens: leadingScreens,
           isLoading: isLoading,
+          axis: axis,
           onLoad: onLoad
         )
       )
@@ -219,17 +231,20 @@ public struct AdditionalLoading: Sendable {
   public let isEnabled: Bool
   public let leadingScreens: Double
   public let isLoading: Bool
+  public let axis: Axis
   public let onLoad: @MainActor () async -> Void
 
   public init(
     isEnabled: Bool,
     leadingScreens: Double,
     isLoading: Binding<Bool>,
+    axis: Axis = .vertical,
     onLoad: @escaping @MainActor () async -> Void
   ) {
     self.isEnabled = isEnabled
     self.leadingScreens = leadingScreens
     self.isLoading = isLoading.wrappedValue
+    self.axis = axis
     self.onLoad = {
       isLoading.wrappedValue = true
       await onLoad()
@@ -241,11 +256,13 @@ public struct AdditionalLoading: Sendable {
     isEnabled: Bool,
     leadingScreens: Double,
     isLoading: Bool,
+    axis: Axis = .vertical,
     onLoad: @escaping @MainActor () -> Void
   ) {
     self.isEnabled = isEnabled
     self.leadingScreens = leadingScreens
     self.isLoading = isLoading
+    self.axis = axis
     self.onLoad = onLoad
   }
 
@@ -282,12 +299,24 @@ private struct _Modifier: ViewModifier {
         return geometry
 
       } action: { _, geometry in
-        let triggers = calculate(
-          contentOffsetY: geometry.contentOffset.y,
-          boundsHeight: geometry.containerSize.height,
-          contentSizeHeight: geometry.contentSize.height,
-          leadingScreens: additionalLoading.leadingScreens
-        )
+        let triggers: Bool
+
+        switch additionalLoading.axis {
+        case .vertical:
+          triggers = calculate(
+            contentOffset: geometry.contentOffset.y,
+            boundsLength: geometry.containerSize.height,
+            contentSizeLength: geometry.contentSize.height,
+            leadingScreens: additionalLoading.leadingScreens
+          )
+        case .horizontal:
+          triggers = calculate(
+            contentOffset: geometry.contentOffset.x,
+            boundsLength: geometry.containerSize.width,
+            contentSizeLength: geometry.contentSize.width,
+            leadingScreens: additionalLoading.leadingScreens
+          )
+        }
 
         if triggers {
           Task { @MainActor in
@@ -314,12 +343,24 @@ private struct _Modifier: ViewModifier {
               return
             }
 
-            let triggers = calculate(
-              contentOffsetY: offset.y,
-              boundsHeight: scrollView.bounds.height,
-              contentSizeHeight: scrollView.contentSize.height,
-              leadingScreens: additionalLoading.leadingScreens
-            )
+            let triggers: Bool
+
+            switch additionalLoading.axis {
+            case .vertical:
+              triggers = calculate(
+                contentOffset: offset.y,
+                boundsLength: scrollView.bounds.height,
+                contentSizeLength: scrollView.contentSize.height,
+                leadingScreens: additionalLoading.leadingScreens
+              )
+            case .horizontal:
+              triggers = calculate(
+                contentOffset: offset.x,
+                boundsLength: scrollView.bounds.width,
+                contentSizeLength: scrollView.contentSize.width,
+                leadingScreens: additionalLoading.leadingScreens
+              )
+            }
 
             if triggers {
               Task { @MainActor in
@@ -371,19 +412,19 @@ private struct _Modifier: ViewModifier {
 }
 
 private func calculate(
-  contentOffsetY: CGFloat,
-  boundsHeight: CGFloat,
-  contentSizeHeight: CGFloat,
+  contentOffset: CGFloat,
+  boundsLength: CGFloat,
+  contentSizeLength: CGFloat,
   leadingScreens: CGFloat
 ) -> Bool {
 
-  guard leadingScreens > 0 || boundsHeight != .zero else {
+  guard leadingScreens > 0 || boundsLength != .zero else {
     return false
   }
 
-  let viewLength = boundsHeight
-  let offset = contentOffsetY
-  let contentLength = contentSizeHeight
+  let viewLength = boundsLength
+  let offset = contentOffset
+  let contentLength = contentSizeLength
 
   let hasSmallContent = (offset == 0.0) && (contentLength < viewLength)
 
@@ -491,6 +532,40 @@ private func calculate(
         items.append(contentsOf: newItems)
         isLoading = false
       }
+    }
+  )
+}
+
+@available(iOS 17, *)
+#Preview("Horizontal ScrollView") {
+  @Previewable @State var items = Array(0..<20)
+  @Previewable @State var isLoading = false
+
+  ScrollView(.horizontal) {
+    LazyHStack {
+      Section {
+        ForEach(items, id: \.self) { index in
+          Text("Item \(index)")
+            .frame(width: 100, height: 100)
+            .background(Color.green)
+        }
+      } footer: {
+        if isLoading {
+          ProgressView()
+            .frame(width: 50, height: 100)
+        }
+      }
+    }
+  }
+  .onAdditionalLoading(
+    leadingScreens: 1,
+    axis: .horizontal,
+    isLoading: $isLoading,
+    onLoad: {
+      try? await Task.sleep(for: .seconds(1))
+      let lastItem = items.last ?? -1
+      let newItems = Array((lastItem + 1)..<(lastItem + 11))
+      items.append(contentsOf: newItems)
     }
   )
 }
