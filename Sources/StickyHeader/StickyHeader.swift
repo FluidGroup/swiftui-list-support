@@ -53,7 +53,6 @@ public struct StickyHeader<Content: View>: View {
 
   public var body: some View {
 
-    let offsetY: CGFloat = 0
 
     let context = StickyHeaderContext(
       topMargin: topMargin,
@@ -64,22 +63,29 @@ public struct StickyHeader<Content: View>: View {
     Group {
       switch sizing {
       case .content:
+        
+        let height = stretchingValue > 0
+        ? baseContentHeight.map { $0 + stretchingValue }
+        : nil
+        
+        let baseContentHeight = stretchingValue > 0 ? self.baseContentHeight ?? 0 : nil
+                
         content(context)
           .onGeometryChange(for: CGSize.self, of: \.size) { size in
             if stretchingValue == 0 {
-              baseContentHeight = size.height
+              self.baseContentHeight = size.height
             }
           }
           .frame(
-            height: baseContentHeight.map {
-              $0 + stretchingValue
-            }
+            height: height
           )
-          .offset(y: -stretchingValue)
+          .offset(y: stretchingValue > 0 ? -stretchingValue : 0)
           // container
           .frame(height: baseContentHeight, alignment: .top)
 
       case .fixed(let height):
+        
+        let offsetY: CGFloat = 0
 
         content(context)
           .frame(height: height + stretchingValue + offsetY)
@@ -253,3 +259,63 @@ private struct Pair: Equatable {
 
   }
 }
+
+
+#Preview("dynamic height change") {
+  @Previewable @State var itemCount: Int = 3
+
+  return ScrollView {
+
+    StickyHeader(sizing: .content) { context in
+
+      ZStack {
+
+        Color.red
+
+        VStack(spacing: 8) {
+          ForEach(0..<itemCount, id: \.self) { index in
+            Text("StickyHeader \(index + 1)")
+              .font(.headline)
+          }
+        }
+        .padding()
+        .border(Color.red)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.yellow)
+        .background(
+          Color.green
+            .padding(.top, -context.topMargin)
+        )
+      }
+
+    }
+
+    VStack(spacing: 0) {
+      HStack(spacing: 16) {
+        Button("Small (1)") {
+          itemCount = 1
+        }
+        .buttonStyle(.borderedProminent)
+
+        Button("Medium (3)") {
+          itemCount = 3
+        }
+        .buttonStyle(.borderedProminent)
+
+        Button("Large (5)") {
+          itemCount = 5
+        }
+        .buttonStyle(.borderedProminent)
+      }
+      .padding()
+      .background(Color.white)
+
+      ForEach(0..<100, id: \.self) { index in
+        Text("Content \(index + 1)")
+          .frame(maxWidth: .infinity)
+          .padding()
+      }
+    }
+  }
+}
+
