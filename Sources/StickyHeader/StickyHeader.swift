@@ -73,7 +73,6 @@ public struct StickyHeader<Content: View>: View {
         content(context)
           .onGeometryChange(for: CGSize.self, of: \.size) { size in
             if stretchingValue == 0 {
-              print("onGeometryChange size: \(size)")
               self.baseContentHeight = size.height
             }
           }
