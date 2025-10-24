@@ -97,6 +97,9 @@ private final class _OlderMessagesLoadingController: ObservableObject {
   var lastKnownContentHeight: CGFloat = 0
   #endif
 
+  // For scroll direction detection
+  var previousContentOffset: CGFloat? = nil
+
   nonisolated init() {}
 }
 
@@ -189,11 +192,33 @@ private struct _OlderMessagesLoadingModifier: ViewModifier {
     guard !isLoadingOlderMessages.wrappedValue else { return false }
     guard controller.currentLoadingTask == nil else { return false }
 
+    // Check scroll direction
+    guard let previousOffset = controller.previousContentOffset else {
+      // First time - can't determine direction, just save and skip
+      controller.previousContentOffset = contentOffset
+      return false
+    }
+
+    let isScrollingUp = contentOffset < previousOffset
+
+    // Update previous offset for next comparison
+    controller.previousContentOffset = contentOffset
+
+    // Only trigger when scrolling up (towards older messages)
+    guard isScrollingUp else {
+      return false
+    }
+
     let triggerDistance = boundsHeight * leadingScreens
     let distanceFromTop = contentOffset
 
-    // Trigger when scrolling up and close to the top
-    return distanceFromTop <= triggerDistance
+    let shouldTrigger = distanceFromTop <= triggerDistance
+
+    if shouldTrigger {
+      print("[ChatUI] shouldTrigger: scrolling up, will trigger (offset: \(contentOffset), distance from top: \(distanceFromTop))")
+    }
+
+    return shouldTrigger
   }
 
   #if canImport(UIKit)
@@ -230,7 +255,7 @@ private struct _OlderMessagesLoadingModifier: ViewModifier {
           print("[ChatUI] contentSize increased: oldHeight=\(oldHeight), newHeight=\(newHeight), heightDiff=\(heightDiff)")
           print("[ChatUI] adjusting offset from \(scrollView.contentOffset.y) to \(newOffset)")
 
-          scrollView.setContentOffset(CGPoint(x: 0, y: newOffset), animated: false)
+          scrollView.contentOffset.y = newOffset
 
           print("[ChatUI] adjusted to \(scrollView.contentOffset.y)")
         }
