@@ -61,6 +61,7 @@ let package = Package(
     .target(
       name: "ChatUI",
       dependencies: [
+        .product(name: "SwiftUIIntrospect", package: "swiftui-introspect")
       ]
     ),
     .target(
