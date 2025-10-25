@@ -16,7 +16,7 @@ struct ContentView: View {
         NavigationLink("Chat") {
           MessageListPreviewContainer()
         }
-        
+                
         NavigationLink("Variadic") {
           BookVariadicView()
         }

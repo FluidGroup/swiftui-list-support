@@ -124,8 +124,9 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
   @MainActor
   private func setupScrollPositionPreservation(scrollView: UIScrollView) {
+    
     controller.scrollViewRef = scrollView
-
+    
     // Clean up existing observations
     controller.contentSizeObservation?.invalidate()
 
