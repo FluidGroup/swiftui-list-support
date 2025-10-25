@@ -11,31 +11,61 @@ import Combine
 
 /// # Spec
 ///
-/// - `MessageList` renders every entry from `messages` as a padded, left-aligned bubble inside a vertical scroll view that keeps short lists anchored to the bottom.
-/// - `MessageListPreviewContainer` provides sample data and hosts interactive controls for SwiftUI previews.
-/// - Pressing `Add Message` appends a uniquely numbered placeholder to `messages`, allowing the preview to demonstrate dynamic updates.
+/// - `MessageList` is a generic, scrollable message list component that displays messages using a custom view builder.
+/// - Keeps short lists anchored to the bottom of the scroll view.
 /// - Supports loading older messages by scrolling up, with an optional loading indicator at the top.
-public struct MessageList: View {
+///
+/// ## Usage
+///
+/// ```swift
+/// MessageList(messages: messages) { message in
+///   Text(message.text)
+///     .padding(12)
+///     .background(Color.blue.opacity(0.1))
+///     .cornerRadius(8)
+/// }
+/// ```
+public struct MessageList<Message: Identifiable, Content: View>: View {
 
-  public let messages: [String]
+  public let messages: [Message]
+  private let content: (Message) -> Content
   private let isLoadingOlderMessages: Binding<Bool>?
   private let autoScrollToBottom: Binding<Bool>?
   private let onLoadOlderMessages: (@MainActor () async -> Void)?
 
-  public init(messages: [String]) {
+  /// Creates a simple message list without older message loading support.
+  ///
+  /// - Parameters:
+  ///   - messages: Array of messages to display. Must conform to `Identifiable`.
+  ///   - content: A view builder that creates the view for each message.
+  public init(
+    messages: [Message],
+    @ViewBuilder content: @escaping (Message) -> Content
+  ) {
     self.messages = messages
+    self.content = content
     self.isLoadingOlderMessages = nil
     self.autoScrollToBottom = nil
     self.onLoadOlderMessages = nil
   }
 
+  /// Creates a message list with older message loading support.
+  ///
+  /// - Parameters:
+  ///   - messages: Array of messages to display. Must conform to `Identifiable`.
+  ///   - isLoadingOlderMessages: Binding that indicates whether older messages are currently being loaded.
+  ///   - autoScrollToBottom: Optional binding that controls automatic scrolling to bottom when new messages are added.
+  ///   - onLoadOlderMessages: Async closure called when user scrolls up to trigger loading older messages.
+  ///   - content: A view builder that creates the view for each message.
   public init(
-    messages: [String],
+    messages: [Message],
     isLoadingOlderMessages: Binding<Bool>,
     autoScrollToBottom: Binding<Bool>? = nil,
-    onLoadOlderMessages: @escaping @MainActor () async -> Void
+    onLoadOlderMessages: @escaping @MainActor () async -> Void,
+    @ViewBuilder content: @escaping (Message) -> Content
   ) {
     self.messages = messages
+    self.content = content
     self.isLoadingOlderMessages = isLoadingOlderMessages
     self.autoScrollToBottom = autoScrollToBottom
     self.onLoadOlderMessages = onLoadOlderMessages
@@ -44,33 +74,27 @@ public struct MessageList: View {
   public var body: some View {
     ScrollView {
       LazyVStack(spacing: 8) {
-        if let isLoadingOlderMessages {
+        if isLoadingOlderMessages != nil {
           Section {
-            ForEach(messages, id: \.self) { message in
-              Text(message)
-                .padding(12)
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            ForEach(messages) { message in
+              content(message)
             }
           } header: {
-            if isLoadingOlderMessages.wrappedValue {
-              ProgressView()
-                .frame(height: 40)
-            }
+            ProgressView()
+              .frame(height: 40)
+              .opacity(isLoadingOlderMessages?.wrappedValue == true ? 1.0 : 0.0)
           }
         } else {
-          ForEach(messages, id: \.self) { message in
-            Text(message)
-              .padding(12)
-              .background(Color.blue.opacity(0.1))
-              .cornerRadius(8)
-              .frame(maxWidth: .infinity, alignment: .leading)
+          ForEach(messages) { message in
+            content(message)
           }
         }
       }
     }
-    .defaultScrollAnchor(.bottom)
+    /**
+     This is a trick to keep the scroll position when new items are inserted at the top.
+     */
+    .contentMargins(.top, -0.5)
     .modifier(
       _OlderMessagesLoadingModifier(
         isLoadingOlderMessages: isLoadingOlderMessages,
@@ -80,80 +104,4 @@ public struct MessageList: View {
     )
   }
 
-}
-
-// MARK: - Previews
-
-private struct MessageListPreviewContainer: View {
-  @State private var messages: [String] = [
-    "Hello, how are you?",
-    "I'm fine, thank you!",
-    "What about you?",
-    "I'm doing great, thanks for asking!",
-  ]
-  @State private var isLoadingOlder = false
-  @State private var autoScrollToBottom = true
-  @State private var olderMessageCounter = 0
-  @State private var newMessageCounter = 0
-
-  var body: some View {
-    VStack(spacing: 16) {
-      VStack(spacing: 8) {
-        Toggle("Auto-scroll to new messages", isOn: $autoScrollToBottom)
-          .font(.caption)
-
-        Text("Scroll up to load older messages")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-
-      MessageList(
-        messages: messages,
-        isLoadingOlderMessages: $isLoadingOlder,
-        autoScrollToBottom: $autoScrollToBottom,
-        onLoadOlderMessages: {
-          print("Loading older messages...")
-          try? await Task.sleep(for: .seconds(1))
-
-          // Add older messages at the beginning
-          // The scroll position will be automatically maintained
-          let newMessages = (0..<5).map { index in
-            olderMessageCounter -= 1
-            return "Older message \(olderMessageCounter)"
-          }
-          messages.insert(contentsOf: newMessages.reversed(), at: 0)
-        }
-      )
-
-      HStack(spacing: 12) {
-        Button("Add New Message") {
-          newMessageCounter += 1
-          messages.append("New message \(newMessageCounter)")
-        }
-        .buttonStyle(.borderedProminent)
-
-        Button("Add Old Message (Bottom)") {
-          let nextIndex = messages.count + 1
-          messages.append("Additional message \(nextIndex)")
-        }
-        .buttonStyle(.bordered)
-      }
-      .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-    .padding()
-  }
-}
-
-#Preview("Interactive Preview") {
-  MessageListPreviewContainer()
-}
-
-#Preview("Simple Preview") {
-  MessageList(messages: [
-    "Hello, how are you?",
-    "I'm fine, thank you!",
-    "What about you?",
-    "I'm doing great, thanks for asking!",
-  ])
-  .padding()
 }

@@ -124,79 +124,8 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
   @MainActor
   private func setupScrollPositionPreservation(scrollView: UIScrollView) {
-    controller.scrollViewRef = scrollView
-
-    // Update autoScrollToBottom from binding
-    if let autoScrollToBottom = autoScrollToBottom {
-      controller.autoScrollToBottom = autoScrollToBottom.wrappedValue
-    }
-
-    // Clean up existing observations
-    controller.contentOffsetObservation?.invalidate()
-    controller.contentSizeObservation?.invalidate()
-
-    // Monitor contentOffset to track current scroll position
-    controller.contentOffsetObservation = scrollView.observe(\.contentOffset, options: [.new]) { [weak controller] scrollView, _ in
-      MainActor.assumeIsolated {
-        guard let controller = controller else { return }
-        controller.lastKnownContentOffset = scrollView.contentOffset.y
-      }
-    }
-
-    // Monitor contentSize to detect when content is added
-    controller.contentSizeObservation = scrollView.observe(\.contentSize, options: [.old, .new]) { [weak controller] scrollView, change in
-      MainActor.assumeIsolated {
-        guard let controller = controller else { return }
-        guard let oldHeight = change.oldValue?.height else { return }
-
-        let newHeight = scrollView.contentSize.height
-        let heightDiff = newHeight - oldHeight
-
-        if heightDiff > 0 {
-          // Update autoScrollToBottom value
-          if let autoScrollToBottom = autoScrollToBottom {
-            controller.autoScrollToBottom = autoScrollToBottom.wrappedValue
-          }
-
-          let savedOffset = controller.lastKnownContentOffset
-          let boundsHeight = scrollView.bounds.height
-
-          // Determine if user is near bottom (within 1 screen height)
-          let distanceFromBottom = oldHeight - savedOffset - boundsHeight
-          let isNearBottom = distanceFromBottom <= boundsHeight
-
-          print("[ChatUI] contentSize increased: oldHeight=\(oldHeight), newHeight=\(newHeight), heightDiff=\(heightDiff)")
-          print("[ChatUI] user position: savedOffset=\(savedOffset), distanceFromBottom=\(distanceFromBottom), isNearBottom=\(isNearBottom)")
-
-          // Case 1: User is viewing old messages (not near bottom) → preserve scroll position
-          if !isNearBottom {
-            let newOffset = savedOffset + heightDiff
-            print("[ChatUI] preserving scroll position (older messages added or user viewing history)")
-            scrollView.contentOffset.y = newOffset
-          }
-          // Case 2: User is near bottom + autoScroll enabled → scroll to bottom
-          else if controller.autoScrollToBottom {
-            let bottomOffset = newHeight - boundsHeight
-            print("[ChatUI] auto-scrolling to bottom (new message added, autoScroll=true)")
-
-            UIView.animate(withDuration: 0.3) {
-              scrollView.contentOffset.y = max(0, bottomOffset)
-            }
-          }
-          // Case 3: User is near bottom but autoScroll disabled → do nothing
-          else {
-            print("[ChatUI] staying at current position (new message added, autoScroll=false)")
-          }
-        }
-
-        controller.lastKnownContentHeight = newHeight
-      }
-    }
-
-    // Initialize with current values
-    controller.lastKnownContentOffset = scrollView.contentOffset.y
-    controller.lastKnownContentHeight = scrollView.contentSize.height
-    print("[ChatUI] initialized: offset=\(scrollView.contentOffset.y), height=\(scrollView.contentSize.height), autoScroll=\(controller.autoScrollToBottom)")
+    // Scroll position preservation is now handled by .contentMargins(.top, -0.5)
+    // This method is kept for potential future use of autoScrollToBottom feature
   }
 
   @MainActor
