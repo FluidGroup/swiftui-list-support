@@ -33,6 +33,29 @@ struct MessageListPreviewContainer: View {
   @State private var olderMessageCounter = 0
   @State private var newMessageCounter = 0
 
+  private static let sampleTexts = [
+    "Hey, did you see that?",
+    "I totally agree with you",
+    "That's interesting!",
+    "Can you explain more?",
+    "I was thinking the same thing",
+    "Wow, really?",
+    "Let me check on that",
+    "Thanks for sharing",
+    "That makes sense",
+    "Good point!",
+    "I'll get back to you",
+    "Sounds good to me",
+    "Looking forward to it",
+    "Nice work!",
+    "Got it, thanks",
+    "Let's do this!",
+    "Perfect timing",
+    "I see what you mean",
+    "Absolutely!",
+    "That's amazing",
+  ]
+
   var body: some View {
     VStack(spacing: 16) {
       VStack(spacing: 8) {
@@ -52,12 +75,12 @@ struct MessageListPreviewContainer: View {
           print("Loading older messages...")
           try? await Task.sleep(for: .seconds(1))
 
-//           Add older messages at the beginning
-//           The scroll position will be automatically maintained
-          let newMessages = (0..<5).map { index in
-            olderMessageCounter -= 1
-            let sender: MessageSender = index % 2 == 0 ? .me : .other
-            return PreviewMessage(text: "Older message \(olderMessageCounter)", sender: sender)
+          // Add older messages at the beginning
+          // The scroll position will be automatically maintained
+          let newMessages = (0..<5).map { _ in
+            let randomText = Self.sampleTexts.randomElement() ?? "Message"
+            let sender: MessageSender = Bool.random() ? .me : .other
+            return PreviewMessage(text: randomText, sender: sender)
           }
           messages.insert(contentsOf: newMessages.reversed(), at: 0)
         }
@@ -71,16 +94,14 @@ struct MessageListPreviewContainer: View {
 
       HStack(spacing: 12) {
         Button("Add New Message") {
-          newMessageCounter += 1
+          let randomText = Self.sampleTexts.randomElement() ?? "Message"
           let sender: MessageSender = Bool.random() ? .me : .other
-          messages.append(PreviewMessage(text: "New message \(newMessageCounter)", sender: sender))
+          messages.append(PreviewMessage(text: randomText, sender: sender))
         }
         .buttonStyle(.borderedProminent)
 
         Button("Add Old Message") {
-          olderMessageCounter -= 1
-          let sender: MessageSender = Bool.random() ? .me : .other
-          messages.insert(PreviewMessage(text: "Old message \(olderMessageCounter)", sender: sender), at: 0)
+          count += 1
         }
         .buttonStyle(.bordered)
 
@@ -92,7 +113,17 @@ struct MessageListPreviewContainer: View {
       .frame(maxWidth: .infinity, alignment: .trailing)
     }
     .padding()
+    .task(id: count) { 
+      let newMessages = (0..<10).map { _ in
+        let randomText = Self.sampleTexts.randomElement() ?? "Message"
+        let sender: MessageSender = Bool.random() ? .me : .other
+        return PreviewMessage(text: randomText, sender: sender)
+      }
+      messages.insert(contentsOf: newMessages.reversed(), at: 0)
+    }
   }
+  
+  @State var count: Int = 0
 }
 
 #Preview("Interactive Preview") {

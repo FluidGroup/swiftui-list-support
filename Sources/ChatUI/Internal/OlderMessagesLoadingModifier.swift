@@ -124,8 +124,49 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
   @MainActor
   private func setupScrollPositionPreservation(scrollView: UIScrollView) {
-    // Scroll position preservation is now handled by .contentMargins(.top, -0.5)
-    // This method is kept for potential future use of autoScrollToBottom feature
+    controller.scrollViewRef = scrollView
+
+    // Clean up existing observations
+    controller.contentSizeObservation?.invalidate()
+
+    // Monitor contentSize to detect when content is added
+    controller.contentSizeObservation = scrollView.observe(\.contentSize, options: [.old, .new]) {
+      [weak controller] scrollView, change in
+      MainActor.assumeIsolated {
+        guard let controller = controller else { return }
+        guard let oldHeight = change.oldValue?.height else { return }
+
+        let newHeight = scrollView.contentSize.height
+        let heightDiff = newHeight - oldHeight
+
+        // Content size increased
+        if heightDiff > 0 {
+          let currentOffset = scrollView.contentOffset.y
+          let boundsHeight = scrollView.bounds.height
+
+          // Case 1: autoScrollToBottom enabled → scroll to bottom
+          if let autoScrollToBottom = autoScrollToBottom,
+             autoScrollToBottom.wrappedValue {
+            let bottomOffset = newHeight - boundsHeight
+            UIView.animate(withDuration: 0.3) {
+              scrollView.contentOffset.y = max(0, bottomOffset)
+            }
+          }
+          // Case 2: User is viewing history → preserve scroll position
+          else {
+            let newOffset = currentOffset + heightDiff
+            scrollView.contentOffset.y = newOffset
+          }
+        }
+
+        controller.lastKnownContentHeight = newHeight
+        controller.lastKnownContentOffset = scrollView.contentOffset.y
+      }
+    }
+
+    // Initialize with current values
+    controller.lastKnownContentHeight = scrollView.contentSize.height
+    controller.lastKnownContentOffset = scrollView.contentOffset.y
   }
 
   @MainActor

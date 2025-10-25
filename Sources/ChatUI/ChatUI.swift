@@ -72,36 +72,34 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
   }
 
   public var body: some View {
-    ScrollView {
-      LazyVStack(spacing: 8) {
-        if isLoadingOlderMessages != nil {
-          Section {
+    ScrollViewReader { proxy in
+      ScrollView {
+        LazyVStack(spacing: 8) {
+          if isLoadingOlderMessages != nil {
+            Section {
+              ForEach(messages) { message in
+                content(message)
+              }
+            } header: {
+              ProgressView()
+                .frame(height: 40)
+//                .opacity(isLoadingOlderMessages?.wrappedValue == true ? 1.0 : 0.0)
+            }
+          } else {
             ForEach(messages) { message in
               content(message)
             }
-          } header: {
-            ProgressView()
-              .frame(height: 40)
-              .opacity(isLoadingOlderMessages?.wrappedValue == true ? 1.0 : 0.0)
-          }
-        } else {
-          ForEach(messages) { message in
-            content(message)
           }
         }
       }
-    }
-    /**
-     This is a trick to keep the scroll position when new items are inserted at the top.
-     */
-    .contentMargins(.top, -0.5)
-    .modifier(
-      _OlderMessagesLoadingModifier(
-        isLoadingOlderMessages: isLoadingOlderMessages,
-        autoScrollToBottom: autoScrollToBottom,
-        onLoadOlderMessages: onLoadOlderMessages
+      .modifier(
+        _OlderMessagesLoadingModifier(
+          isLoadingOlderMessages: isLoadingOlderMessages,
+          autoScrollToBottom: autoScrollToBottom,
+          onLoadOlderMessages: onLoadOlderMessages
+        )
       )
-    )
+    }
   }
 
 }
