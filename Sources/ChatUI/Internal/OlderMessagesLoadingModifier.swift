@@ -124,13 +124,13 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
   @MainActor
   private func setupScrollPositionPreservation(scrollView: UIScrollView) {
-    
+
     controller.scrollViewRef = scrollView
-    
+
     // Clean up existing observations
     controller.contentSizeObservation?.invalidate()
 
-    // Monitor contentSize to detect when content is added
+    // Monitor contentSize to detect when content is added (KVO)
     controller.contentSizeObservation = scrollView.observe(\.contentSize, options: [.old, .new]) {
       [weak controller] scrollView, change in
       MainActor.assumeIsolated {

@@ -119,6 +119,7 @@ struct MessageListPreviewContainer: View {
         let sender: MessageSender = Bool.random() ? .me : .other
         return PreviewMessage(text: randomText, sender: sender)
       }
+      try? await Task.sleep(for: .milliseconds(500))
       messages.insert(contentsOf: newMessages.reversed(), at: 0)
     }
   }
