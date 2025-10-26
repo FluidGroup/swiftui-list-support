@@ -79,6 +79,12 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
             Section {
               ForEach(messages) { message in
                 content(message)
+                  .anchorPreference(
+                    key: _VisibleMessagesPreference.self,
+                    value: .bounds
+                  ) { anchor in
+                    [_VisibleMessagePayload(messageId: AnyHashable(message.id), bounds: anchor)]
+                  }
               }
             } header: {
               ProgressView()
@@ -88,8 +94,52 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
           } else {
             ForEach(messages) { message in
               content(message)
+                .anchorPreference(
+                  key: _VisibleMessagesPreference.self,
+                  value: .bounds
+                ) { anchor in
+                  [_VisibleMessagePayload(messageId: AnyHashable(message.id), bounds: anchor)]
+                }
             }
           }
+        }
+      }
+      .overlayPreferenceValue(_VisibleMessagesPreference.self) { payloads in
+        GeometryReader { geometry in
+          let sorted = payloads
+            .map { payload in
+              let rect = geometry[payload.bounds]
+              return (id: payload.messageId, y: rect.minY)
+            }
+            .sorted { $0.y < $1.y }
+
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Visible Messages: \(sorted.count)")
+              .font(.caption)
+              .fontWeight(.bold)
+
+            if let first = sorted.first {
+              Text("First: \(String(describing: first.id))")
+                .font(.caption2)
+              Text("  y=\(String(format: "%.1f", first.y))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+
+            if let last = sorted.last {
+              Text("Last: \(String(describing: last.id))")
+                .font(.caption2)
+              Text("  y=\(String(format: "%.1f", last.y))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+          }
+          .padding(8)
+          .background(Color.black.opacity(0.8))
+          .foregroundStyle(.white)
+          .cornerRadius(8)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+          .padding()
         }
       }
       .modifier(
