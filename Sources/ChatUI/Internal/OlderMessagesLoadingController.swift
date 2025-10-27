@@ -21,5 +21,8 @@ final class _OlderMessagesLoadingController: ObservableObject {
   weak var scrollViewRef: UIScrollView? = nil
   var contentSizeObservation: NSKeyValueObservation? = nil
 
+  // Internal loading state (used when no external binding is provided)
+  var internalIsBackwardLoading: Bool = false
+
   nonisolated init() {}
 }

@@ -29,7 +29,6 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
 
   public let messages: [Message]
   private let content: (Message) -> Content
-  private let isLoadingOlderMessages: Binding<Bool>?
   private let autoScrollToBottom: Binding<Bool>?
   private let onLoadOlderMessages: (@MainActor () async -> Void)?
 
@@ -44,7 +43,6 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
   ) {
     self.messages = messages
     self.content = content
-    self.isLoadingOlderMessages = nil
     self.autoScrollToBottom = nil
     self.onLoadOlderMessages = nil
   }
@@ -53,20 +51,17 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
   ///
   /// - Parameters:
   ///   - messages: Array of messages to display. Must conform to `Identifiable`.
-  ///   - isLoadingOlderMessages: Binding that indicates whether older messages are currently being loaded.
   ///   - autoScrollToBottom: Optional binding that controls automatic scrolling to bottom when new messages are added.
   ///   - onLoadOlderMessages: Async closure called when user scrolls up to trigger loading older messages.
   ///   - content: A view builder that creates the view for each message.
   public init(
     messages: [Message],
-    isLoadingOlderMessages: Binding<Bool>,
     autoScrollToBottom: Binding<Bool>? = nil,
     onLoadOlderMessages: @escaping @MainActor () async -> Void,
     @ViewBuilder content: @escaping (Message) -> Content
   ) {
     self.messages = messages
     self.content = content
-    self.isLoadingOlderMessages = isLoadingOlderMessages
     self.autoScrollToBottom = autoScrollToBottom
     self.onLoadOlderMessages = onLoadOlderMessages
   }
@@ -75,7 +70,7 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
     ScrollViewReader { proxy in
       ScrollView {
         LazyVStack(spacing: 8) {
-          if isLoadingOlderMessages != nil {
+          if onLoadOlderMessages != nil {
             Section {
               ForEach(messages) { message in
                 content(message)
@@ -89,7 +84,6 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
             } header: {
               ProgressView()
                 .frame(height: 40)
-//                .opacity(isLoadingOlderMessages?.wrappedValue == true ? 1.0 : 0.0)
             }
           } else {
             ForEach(messages) { message in
@@ -144,7 +138,6 @@ public struct MessageList<Message: Identifiable, Content: View>: View {
       }
       .modifier(
         _OlderMessagesLoadingModifier(
-          isLoadingOlderMessages: isLoadingOlderMessages,
           autoScrollToBottom: autoScrollToBottom,
           onLoadOlderMessages: onLoadOlderMessages
         )

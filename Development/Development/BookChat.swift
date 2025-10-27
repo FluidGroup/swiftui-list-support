@@ -69,7 +69,6 @@ struct MessageListPreviewContainer: View {
 
       MessageList(
         messages: messages,
-        isLoadingOlderMessages: $isLoadingOlder,
         autoScrollToBottom: $autoScrollToBottom,
         onLoadOlderMessages: {
           print("Loading older messages...")

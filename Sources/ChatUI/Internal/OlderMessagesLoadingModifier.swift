@@ -12,23 +12,20 @@ import UIKit
 struct _OlderMessagesLoadingModifier: ViewModifier {
   @StateObject var controller: _OlderMessagesLoadingController = .init()
 
-  private let isLoadingOlderMessages: Binding<Bool>?
   private let autoScrollToBottom: Binding<Bool>?
   private let onLoadOlderMessages: (@MainActor () async -> Void)?
   private let leadingScreens: CGFloat = 1.0
 
   nonisolated init(
-    isLoadingOlderMessages: Binding<Bool>?,
     autoScrollToBottom: Binding<Bool>?,
     onLoadOlderMessages: (@MainActor () async -> Void)?
   ) {
-    self.isLoadingOlderMessages = isLoadingOlderMessages
     self.autoScrollToBottom = autoScrollToBottom
     self.onLoadOlderMessages = onLoadOlderMessages
   }
 
   func body(content: Content) -> some View {
-    if isLoadingOlderMessages != nil, onLoadOlderMessages != nil {
+    if onLoadOlderMessages != nil {
       if #available(iOS 18.0, macOS 15.0, *) {
         content
           .introspect(.scrollView, on: .iOS(.v18, .v26)) { scrollView in
@@ -61,22 +58,24 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
           controller.scrollViewSubscription?.cancel()
 
-          controller.scrollViewSubscription = scrollView.publisher(for: \.contentOffset)
-            .sink { [weak scrollView] offset in
-              guard let scrollView else { return }
+          controller.scrollViewSubscription = scrollView.publisher(
+            for: \.contentOffset
+          )
+          .sink { [weak scrollView] offset in
+            guard let scrollView else { return }
 
-              let triggers = shouldTriggerLoading(
-                contentOffset: offset.y,
-                boundsHeight: scrollView.bounds.height,
-                contentHeight: scrollView.contentSize.height
-              )
+            let triggers = shouldTriggerLoading(
+              contentOffset: offset.y,
+              boundsHeight: scrollView.bounds.height,
+              contentHeight: scrollView.contentSize.height
+            )
 
-              if triggers {
-                Task { @MainActor in
-                  trigger()
-                }
+            if triggers {
+              Task { @MainActor in
+                trigger()
               }
             }
+          }
         }
       }
     } else {
@@ -84,13 +83,20 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
     }
   }
 
+  private var isBackwardLoading: Bool {
+    controller.internalIsBackwardLoading
+  }
+
+  private func setBackwardLoading(_ value: Bool) {
+    controller.internalIsBackwardLoading = value
+  }
+
   private func shouldTriggerLoading(
     contentOffset: CGFloat,
     boundsHeight: CGFloat,
     contentHeight: CGFloat
   ) -> Bool {
-    guard let isLoadingOlderMessages = isLoadingOlderMessages else { return false }
-    guard !isLoadingOlderMessages.wrappedValue else { return false }
+    guard !isBackwardLoading else { return false }
     guard controller.currentLoadingTask == nil else { return false }
 
     // Check scroll direction
@@ -127,10 +133,11 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
     controller.contentSizeObservation?.invalidate()
 
     // Monitor contentSize to detect when content is added (KVO)
-    controller.contentSizeObservation = scrollView.observe(\.contentSize, options: [.old, .new]) {
-      [weak controller] scrollView, change in
+    controller.contentSizeObservation = scrollView.observe(
+      \.contentSize,
+      options: [.old, .new]
+    ) { scrollView, change in
       MainActor.assumeIsolated {
-        guard let controller = controller else { return }
         guard let oldHeight = change.oldValue?.height else { return }
 
         let newHeight = scrollView.contentSize.height
@@ -141,19 +148,21 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
           let currentOffset = scrollView.contentOffset.y
           let boundsHeight = scrollView.bounds.height
 
-          // Case 1: autoScrollToBottom enabled → scroll to bottom
-          if let autoScrollToBottom = autoScrollToBottom,
-             autoScrollToBottom.wrappedValue {
+          // Case 1: Loading older messages → preserve scroll position (highest priority)
+          if isBackwardLoading {
+            let newOffset = currentOffset + heightDiff
+            scrollView.contentOffset.y = newOffset
+          }
+          // Case 2: autoScrollToBottom enabled → scroll to bottom
+          else if let autoScrollToBottom = autoScrollToBottom,
+            autoScrollToBottom.wrappedValue
+          {
             let bottomOffset = newHeight - boundsHeight
             UIView.animate(withDuration: 0.3) {
               scrollView.contentOffset.y = max(0, bottomOffset)
             }
           }
-          // Case 2: User is viewing history → preserve scroll position
-          else {
-            let newOffset = currentOffset + heightDiff
-            scrollView.contentOffset.y = newOffset
-          }
+          // Case 3: Normal message addition → do nothing
         }
       }
     }
@@ -161,27 +170,33 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
   @MainActor
   private func trigger() {
-    guard let isLoadingOlderMessages = isLoadingOlderMessages else { return }
+
     guard let onLoadOlderMessages = onLoadOlderMessages else { return }
-    guard !isLoadingOlderMessages.wrappedValue else { return }
+
+    guard !isBackwardLoading else { return }
+
     guard controller.currentLoadingTask == nil else { return }
 
     let task = Task { @MainActor in
       await withTaskCancellationHandler {
-        isLoadingOlderMessages.wrappedValue = true
+        setBackwardLoading(true)
+
         await onLoadOlderMessages()
-        isLoadingOlderMessages.wrappedValue = false
+
+        // Debounce to avoid rapid re-triggering
+        // Ensure the UI has time to update
+        try? await Task.sleep(for: .milliseconds(100))
+
+        setBackwardLoading(false)
 
         controller.currentLoadingTask = nil
       } onCancel: {
         Task { @MainActor in
-          isLoadingOlderMessages.wrappedValue = false
+          setBackwardLoading(false)
           controller.currentLoadingTask = nil
         }
       }
 
-      // Debounce to avoid rapid re-triggering
-      try? await Task.sleep(for: .seconds(0.1))
     }
 
     controller.currentLoadingTask = task
