@@ -206,7 +206,7 @@ struct AdvancedCollectionView: View {
         spacing: 8
       )
     ) {
-      // Header with refresh control
+      // Header with refresh control (from PullingControl module)
       RefreshControl(
         threshold: 60,
         action: {
@@ -502,12 +502,64 @@ StickyHeader(sizing: .fixed(250)) { context in
 }
 ```
 
-### 6. RefreshControl
+### 6. PullingControl
 
-Custom pull-to-refresh control for ScrollView with customizable appearance.
+A two-layered pull gesture detection system for ScrollView. Provides both low-level pull detection (`PullingControl`) and high-level pull-to-refresh functionality (`RefreshControl`).
+
+#### Low-Level: PullingControl
+
+Detects pull gestures and provides pull distance, progress, and threshold state. Use this when you need custom pull-based interactions beyond refresh.
 
 ```swift
-import RefreshControl
+import PullingControl
+
+struct CustomPullView: View {
+  @State private var log: [String] = []
+
+  var body: some View {
+    ScrollView {
+      VStack(spacing: 0) {
+        PullingControl(
+          threshold: 80,
+          onChange: { context in
+            // Called when pull state changes
+            if context.isThresholdReached {
+              log.append("Threshold reached!")
+            }
+          }
+        ) { context in
+          if context.isPulling {
+            VStack {
+              Text("Pull progress: \(Int(context.progress * 100))%")
+              Text(context.isThresholdReached ? "Release!" : "Keep pulling")
+            }
+            .padding()
+          }
+        }
+
+        LazyVStack {
+          ForEach(log, id: \.self) { message in
+            Text(message)
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**PullingContext Properties:**
+- `pullDistance: CGFloat` - Current pull distance in points
+- `progress: Double` - Normalized progress (0.0 to 1.0)
+- `isThresholdReached: Bool` - Whether threshold is reached
+- `isPulling: Bool` - Whether currently pulling
+
+#### High-Level: RefreshControl
+
+Built on top of `PullingControl` with async action execution, refreshing state management, and haptic feedback.
+
+```swift
+import PullingControl
 
 struct RefreshableList: View {
   @State private var items: [Item] = []
@@ -556,6 +608,16 @@ struct RefreshableList: View {
 }
 ```
 
+**RefreshControlContext States:**
+- `.idle` - Not pulling
+- `.pulling(progress: Double)` - User is pulling
+- `.refreshing` - Refresh action is executing
+- `.finishing` - Refresh completed (optional for animations)
+
+**When to Use Which:**
+- **PullingControl**: Custom pull-based interactions, analytics, custom state management
+- **RefreshControl**: Standard pull-to-refresh functionality
+
 ## Architecture Comparison
 
 | Module | Implementation | Use Case |
@@ -563,6 +625,9 @@ struct RefreshableList: View {
 | **DynamicList** | UIKit UICollectionView with SwiftUI hosting | Maximum performance, large datasets, complex layouts |
 | **CollectionView** | Pure SwiftUI (ScrollView + Lazy stacks) | Simple layouts, moderate datasets, pure SwiftUI apps |
 | **SelectableForEach** | Pure SwiftUI with environment values | Add selection to any container view |
+| **ScrollTracking** | SwiftUI with introspection | Infinite scrolling, additional content loading |
+| **StickyHeader** | Pure SwiftUI with geometry tracking | Sticky headers with stretching effects |
+| **PullingControl** | Pure SwiftUI with geometry tracking | Pull-to-refresh and custom pull gestures |
 
 
 

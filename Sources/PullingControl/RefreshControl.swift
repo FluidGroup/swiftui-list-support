@@ -25,7 +25,7 @@ public struct RefreshControlContext {
 }
 
 /// A customizable pull-to-refresh control for ScrollView.
-/// Uses similar geometry tracking as StickyHeader to detect pull gestures.
+/// Built on top of PullingControl with async action support and refreshing state management.
 ///
 /// Example usage:
 /// ```swift
@@ -41,19 +41,16 @@ public struct RefreshControlContext {
 /// ```
 public struct RefreshControl<Content: View>: View {
 
-  /// The threshold distance to trigger refresh
-  public static var defaultThreshold: CGFloat { 80 }
-
   private let threshold: CGFloat
   private let action: () async -> Void
   private let content: (RefreshControlContext) -> Content
 
-  @State private var pullDistance: CGFloat = 0
   @State private var isRefreshing: Bool = false
   @State private var hasTriggered: Bool = false
+  @State private var frozenPullDistance: CGFloat = 0
 
   public init(
-    threshold: CGFloat = RefreshControl.defaultThreshold,
+    threshold: CGFloat = 80,
     action: @escaping () async -> Void,
     @ViewBuilder content: @escaping (RefreshControlContext) -> Content
   ) {
@@ -62,55 +59,49 @@ public struct RefreshControl<Content: View>: View {
     self.content = content
   }
 
-
   public var body: some View {
-    let progress = min(1.0, max(0.0, pullDistance / threshold))
-
-    let state: RefreshControlContext.State = {
-      if isRefreshing {
-        return .refreshing
-      } else if pullDistance > 0 {
-        return .pulling(progress: progress)
-      } else {
-        return .idle
-      }
-    }()
-
-    let context = RefreshControlContext(
-      state: state,
-      pullDistance: pullDistance,
-      progress: progress
-    )
-
-    content(context)
-      .frame(height: max(0, pullDistance))
-      .opacity(pullDistance > 0 ? 1 : 0)
-      .animation(.easeOut(duration: 0.2), value: pullDistance)
-      .onGeometryChange(
-        for: CGFloat.self,
-        of: { geometry in
-          geometry.frame(in: .scrollView).minY
-        }
-      ) { minY in
-        // Only track positive overscroll
-        let newPullDistance = max(0, minY)
-
-        // Update pull distance if not refreshing
+    PullingControl(
+      threshold: threshold,
+      isExpanding: isRefreshing,
+      onChange: { pullingContext in
+        // Handle pulling state changes
         if !isRefreshing {
-          pullDistance = newPullDistance
-
-          // Check if we should trigger refresh
-          if pullDistance >= threshold && !hasTriggered {
+          if pullingContext.isThresholdReached && !hasTriggered {
             triggerRefresh()
-          } else if pullDistance < threshold {
+          } else if !pullingContext.isPulling && hasTriggered {
             hasTriggered = false
           }
         }
       }
+    ) { pullingContext in
+      // Determine effective values based on refreshing state
+      let effectivePullDistance = isRefreshing ? frozenPullDistance : pullingContext.pullDistance
+      let effectiveProgress = isRefreshing ? (frozenPullDistance / threshold) : pullingContext.progress
+
+      // Build RefreshControlContext from PullingContext
+      let state: RefreshControlContext.State = {
+        if isRefreshing {
+          return .refreshing
+        } else if pullingContext.isPulling {
+          return .pulling(progress: effectiveProgress)
+        } else {
+          return .idle
+        }
+      }()
+
+      let context = RefreshControlContext(
+        state: state,
+        pullDistance: effectivePullDistance,
+        progress: effectiveProgress
+      )
+
+      return content(context)
+    }
   }
 
   private func triggerRefresh() {
     hasTriggered = true
+    frozenPullDistance = threshold
     isRefreshing = true
 
     // Haptic feedback
@@ -121,19 +112,14 @@ public struct RefreshControl<Content: View>: View {
     #endif
 
     Task {
-      // Keep the refresh control visible
-      withAnimation {
-        pullDistance = threshold
-      }
-
       // Perform the refresh action
       await action()
 
-      // Reset state
+      // Reset state with animation
       withAnimation(.easeOut(duration: 0.3)) {
         isRefreshing = false
-        pullDistance = 0
         hasTriggered = false
+        frozenPullDistance = 0
       }
     }
   }
