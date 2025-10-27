@@ -28,8 +28,8 @@ let package = Package(
       targets: ["StickyHeader"]
     ),
     .library(
-      name: "RefreshControl",
-      targets: ["RefreshControl"]
+      name: "PullingControl",
+      targets: ["PullingControl"]
     ),
     .library(
       name: "SelectableForEach",
@@ -66,7 +66,7 @@ let package = Package(
       ]
     ),
     .target(
-      name: "RefreshControl",
+      name: "PullingControl",
       dependencies: [
       ]
     ),
