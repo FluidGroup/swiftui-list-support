@@ -1,4 +1,10 @@
 import SwiftUI
+@_spi(Advanced) import SwiftUIIntrospect
+import Combine
+
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Context provided to the content builder of PullingControl
 public struct PullingContext: Equatable {
@@ -35,9 +41,17 @@ public struct PullingContext: Equatable {
 /// ScrollView {
 ///   PullingControl(
 ///     threshold: 80,
+///     isExpanding: isLoading,  // Keep height at threshold when true
 ///     onChange: { context in
 ///       if context.isThresholdReached {
-///         // Handle threshold reached
+///         // Handle threshold reached while pulling
+///       }
+///     },
+///     onRelease: { context in
+///       // Handle release (finger lifted)
+///       if context.isThresholdReached {
+///         // User released after reaching threshold
+///         startLoading()
 ///       }
 ///     }
 ///   ) { context in
@@ -54,18 +68,29 @@ public struct PullingContext: Equatable {
 public struct PullingControl<Content: View>: View {
 
   private let threshold: CGFloat
+  private let isExpanding: Bool
   private let onChange: ((PullingContext) -> Void)?
+  private let onRelease: ((PullingContext) -> Void)?
   private let content: (PullingContext) -> Content
 
   @State private var pullDistance: CGFloat = 0
+  @State private var lastPullingContext: PullingContext?
+  @State private var isDragging: Bool = false
+  @State private var draggingSubscription: AnyCancellable? = nil
+  
+  @StateObject private var model = Model()
 
   public init(
     threshold: CGFloat = 80,
+    isExpanding: Bool = false,
     onChange: ((PullingContext) -> Void)? = nil,
+    onRelease: ((PullingContext) -> Void)? = nil,
     @ViewBuilder content: @escaping (PullingContext) -> Content
   ) {
     self.threshold = threshold
+    self.isExpanding = isExpanding
     self.onChange = onChange
+    self.onRelease = onRelease
     self.content = content
   }
 
@@ -84,9 +109,35 @@ public struct PullingControl<Content: View>: View {
 
   public var body: some View {
     let context = makeContext(pullDistance: pullDistance)
+    let effectiveHeight = isExpanding ? threshold : pullDistance
 
     content(context)
-      .frame(height: max(0, pullDistance))
+      .frame(height: max(0, effectiveHeight))
+      #if canImport(UIKit)
+      .background(
+        Color.clear
+          .introspect(
+            .scrollView,
+            on: .iOS(.v17...),
+            scope: .ancestor,
+            customize: { scrollView in
+             
+              let previousValue = self.model.isDragging
+              self.model.isDragging = scrollView.isDragging
+              
+              if self.model.isDragging == false, previousValue == true {
+                print("[PullingControl] isDragging initial: \(isDragging)")
+                if isDragging == false {
+                  let context = makeContext(pullDistance: pullDistance)
+                  // User released finger
+                  onRelease?(context)
+                }
+              }
+                          
+            }
+          )
+      )
+      #endif
       .onGeometryChange(
         for: CGFloat.self,
         of: { geometry in
@@ -97,8 +148,22 @@ public struct PullingControl<Content: View>: View {
         pullDistance = max(0, minY)
       }
       .onChange(of: context) { _, newContext in
+        // Save the context when pulling
+        if newContext.isPulling {
+          lastPullingContext = newContext
+        }
+
         onChange?(newContext)
       }
+  }
+}
+
+private final class Model: ObservableObject {
+  
+  var isDragging: Bool = false
+  
+  init() {
+    
   }
 }
 
@@ -106,15 +171,33 @@ public struct PullingControl<Content: View>: View {
 
 #Preview("Simple Text Indicator") {
   struct ContentView: View {
+
     var body: some View {
+
       ScrollView {
         VStack(spacing: 0) {
-          PullingControl(threshold: 80) { context in
+          PullingControl(
+            threshold: 80,
+            onRelease: { context in
+              if context.isThresholdReached {
+                print(
+                  "[onRelease] ✅ Released at threshold! (progress: \(String(format: "%.2f", context.progress)))"
+                )
+              } else {
+                print("[onRelease] Released at \(Int(context.progress * 100))%")
+              }
+            }
+          ) { context in
             VStack(spacing: 4) {
               if context.isPulling {
-                Text(context.isThresholdReached ? "Threshold Reached!" : "Pulling...")
-                  .font(.caption)
-                  .foregroundColor(context.isThresholdReached ? .green : .secondary)
+                Text(
+                  context.isThresholdReached
+                    ? "Threshold Reached!" : "Pulling..."
+                )
+                .font(.caption)
+                .foregroundColor(
+                  context.isThresholdReached ? .green : .secondary
+                )
 
                 Text("Progress: \(Int(context.progress * 100))%")
                   .font(.caption2)
@@ -151,9 +234,13 @@ public struct PullingControl<Content: View>: View {
           PullingControl(threshold: 100) { context in
             if context.isPulling {
               VStack(alignment: .leading, spacing: 2) {
-                Text("pullDistance: \(String(format: "%.1f", context.pullDistance))")
+                Text(
+                  "pullDistance: \(String(format: "%.1f", context.pullDistance))"
+                )
                 Text("progress: \(String(format: "%.2f", context.progress))")
-                Text("isThresholdReached: \(context.isThresholdReached ? "true" : "false")")
+                Text(
+                  "isThresholdReached: \(context.isThresholdReached ? "true" : "false")"
+                )
               }
               .font(.caption)
               .foregroundColor(.secondary)
@@ -180,26 +267,38 @@ public struct PullingControl<Content: View>: View {
   return ContentView()
 }
 
-#Preview("With onChange Callback") {
+#Preview("With onRelease Callback") {
   struct ContentView: View {
-    @State private var log: [String] = []
-
     var body: some View {
       ScrollView {
         VStack(spacing: 0) {
           PullingControl(
             threshold: 80,
             onChange: { context in
+//              print(
+//                "[onChange] pullDistance: \(String(format: "%.1f", context.pullDistance)), progress: \(String(format: "%.2f", context.progress)), isThresholdReached: \(context.isThresholdReached)"
+//              )
+            },
+            onRelease: { context in
               if context.isThresholdReached {
-                log.append("Threshold reached at \(Date().formatted(date: .omitted, time: .standard))")
+                print(
+                  "[onRelease] ✅ Released at threshold! (progress: \(String(format: "%.2f", context.progress)))"
+                )
+              } else {
+                print("[onRelease] Released at \(Int(context.progress * 100))%")
               }
             }
           ) { context in
             VStack(spacing: 4) {
               if context.isPulling {
-                Text(context.isThresholdReached ? "Threshold Reached!" : "Pulling...")
-                  .font(.caption)
-                  .foregroundColor(context.isThresholdReached ? .green : .secondary)
+                Text(
+                  context.isThresholdReached
+                    ? "Threshold Reached!" : "Pulling..."
+                )
+                .font(.caption)
+                .foregroundColor(
+                  context.isThresholdReached ? .green : .secondary
+                )
 
                 Text("Progress: \(Int(context.progress * 100))%")
                   .font(.caption2)
@@ -211,19 +310,15 @@ public struct PullingControl<Content: View>: View {
           }
 
           VStack(spacing: 8) {
-            Text("Event Log:")
+            Text("Check Console for Logs")
               .font(.headline)
-              .frame(maxWidth: .infinity, alignment: .leading)
-
-            ForEach(log.indices, id: \.self) { index in
-              Text(log[index])
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+              .foregroundColor(.secondary)
+              .frame(maxWidth: .infinity)
+              .padding()
+              .background(Color.yellow.opacity(0.1))
+              .cornerRadius(8)
           }
           .padding()
-          .background(Color.yellow.opacity(0.1))
 
           LazyVStack(spacing: 12) {
             ForEach(0..<20, id: \.self) { item in

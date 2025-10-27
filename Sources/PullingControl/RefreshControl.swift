@@ -62,6 +62,7 @@ public struct RefreshControl<Content: View>: View {
   public var body: some View {
     PullingControl(
       threshold: threshold,
+      isExpanding: isRefreshing,
       onChange: { pullingContext in
         // Handle pulling state changes
         if !isRefreshing {
