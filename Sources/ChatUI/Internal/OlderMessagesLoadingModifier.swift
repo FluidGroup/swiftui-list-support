@@ -115,10 +115,6 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
 
     let shouldTrigger = distanceFromTop <= triggerDistance
 
-    if shouldTrigger {
-      print("[ChatUI] shouldTrigger: scrolling up, will trigger (offset: \(contentOffset), distance from top: \(distanceFromTop))")
-    }
-
     return shouldTrigger
   }
 
@@ -159,15 +155,8 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
             scrollView.contentOffset.y = newOffset
           }
         }
-
-        controller.lastKnownContentHeight = newHeight
-        controller.lastKnownContentOffset = scrollView.contentOffset.y
       }
     }
-
-    // Initialize with current values
-    controller.lastKnownContentHeight = scrollView.contentSize.height
-    controller.lastKnownContentOffset = scrollView.contentOffset.y
   }
 
   @MainActor
@@ -180,9 +169,7 @@ struct _OlderMessagesLoadingModifier: ViewModifier {
     let task = Task { @MainActor in
       await withTaskCancellationHandler {
         isLoadingOlderMessages.wrappedValue = true
-        print("[ChatUI] trigger: starting to load older messages")
         await onLoadOlderMessages()
-        print("[ChatUI] trigger: finished loading older messages")
         isLoadingOlderMessages.wrappedValue = false
 
         controller.currentLoadingTask = nil

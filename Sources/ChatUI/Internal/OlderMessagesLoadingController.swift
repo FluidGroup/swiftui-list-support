@@ -20,8 +20,6 @@ final class _OlderMessagesLoadingController: ObservableObject {
   // For scroll position preservation
   weak var scrollViewRef: UIScrollView? = nil
   var contentSizeObservation: NSKeyValueObservation? = nil
-  var lastKnownContentHeight: CGFloat = 0
-  var lastKnownContentOffset: CGFloat = 0
 
   nonisolated init() {}
 }
