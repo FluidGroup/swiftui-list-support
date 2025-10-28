@@ -13,6 +13,10 @@ struct ContentView: View {
     NavigationView {
 
       List {
+        NavigationLink("Chat") {
+          MessageListPreviewContainer()
+        }
+                
         NavigationLink("Variadic") {
           BookVariadicView()
         }
