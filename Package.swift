@@ -68,7 +68,6 @@ let package = Package(
     .target(
       name: "PullingControl",
       dependencies: [
-        .product(name: "SwiftUIIntrospect", package: "swiftui-introspect")
       ]
     ),
     .target(
