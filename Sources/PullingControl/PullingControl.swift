@@ -91,7 +91,7 @@ public struct PullingControl<Content: View>: View {
     let effectiveHeight = isExpanding ? threshold : pullDistance
 
     content(context)
-      .frame(height: max(0.5, effectiveHeight))
+      .frame(height: max(0, effectiveHeight))
       .onGeometryChange(
         for: CGFloat.self,
         of: { geometry in
