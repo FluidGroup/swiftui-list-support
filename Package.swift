@@ -16,6 +16,10 @@ let package = Package(
       targets: ["DynamicList"]
     ),
     .library(
+      name: "ChatUI",
+      targets: ["ChatUI"]
+    ),
+    .library(
       name: "CollectionView",
       targets: ["CollectionView"]
     ),
@@ -52,6 +56,12 @@ let package = Package(
       name: "CollectionView",
       dependencies: [
         "ScrollTracking",
+      ]
+    ),
+    .target(
+      name: "ChatUI",
+      dependencies: [
+        .product(name: "SwiftUIIntrospect", package: "swiftui-introspect")
       ]
     ),
     .target(
