@@ -299,6 +299,11 @@ private struct _Modifier: ViewModifier {
         return geometry
 
       } action: { _, geometry in
+        // SwiftUI can report an empty viewport before a List has laid out its rows.
+        guard geometry.containerSize.width > 0, geometry.containerSize.height > 0 else {
+          return
+        }
+
         let triggers: Bool
 
         switch additionalLoading.axis {
@@ -418,8 +423,7 @@ private func calculate(
   leadingScreens: CGFloat
 ) -> Bool {
 
-  // SwiftUI can report an empty viewport before a List has laid out its rows.
-  guard boundsLength > 0 else {
+  guard leadingScreens > 0 || boundsLength != .zero else {
     return false
   }
 
