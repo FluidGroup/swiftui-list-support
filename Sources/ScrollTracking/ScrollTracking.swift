@@ -299,24 +299,24 @@ private struct _Modifier: ViewModifier {
         return geometry
 
       } action: { _, geometry in
-        let triggers: Bool
-
-        switch additionalLoading.axis {
+        let (contentOffset, boundsLength, contentSizeLength) = switch additionalLoading.axis {
         case .vertical:
-          triggers = calculate(
-            contentOffset: geometry.contentOffset.y,
-            boundsLength: geometry.containerSize.height,
-            contentSizeLength: geometry.contentSize.height,
-            leadingScreens: additionalLoading.leadingScreens
-          )
+          (geometry.contentOffset.y, geometry.containerSize.height, geometry.contentSize.height)
         case .horizontal:
-          triggers = calculate(
-            contentOffset: geometry.contentOffset.x,
-            boundsLength: geometry.containerSize.width,
-            contentSizeLength: geometry.contentSize.width,
-            leadingScreens: additionalLoading.leadingScreens
-          )
+          (geometry.contentOffset.x, geometry.containerSize.width, geometry.contentSize.width)
         }
+
+        // SwiftUI can report an empty viewport before a List has laid out its rows.
+        guard boundsLength > 0 else {
+          return
+        }
+
+        let triggers = calculate(
+          contentOffset: contentOffset,
+          boundsLength: boundsLength,
+          contentSizeLength: contentSizeLength,
+          leadingScreens: additionalLoading.leadingScreens
+        )
 
         if triggers {
           Task { @MainActor in
