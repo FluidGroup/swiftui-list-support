@@ -362,6 +362,8 @@ CollectionView(layout: .grid(...)) {
 
 Provides infinite scrolling (additional loading) functionality for SwiftUI ScrollView and List views. Automatically triggers loading when the user approaches the end of scrollable content.
 
+Available on iOS 17+ and macOS 15+.
+
 ```swift
 import ScrollTracking
 

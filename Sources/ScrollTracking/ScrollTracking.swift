@@ -418,7 +418,8 @@ private func calculate(
   leadingScreens: CGFloat
 ) -> Bool {
 
-  guard leadingScreens > 0 || boundsLength != .zero else {
+  // SwiftUI can report an empty viewport before a List has laid out its rows.
+  guard boundsLength > 0 else {
     return false
   }
 
